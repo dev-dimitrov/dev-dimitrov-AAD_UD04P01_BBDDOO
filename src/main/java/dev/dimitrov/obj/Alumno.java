@@ -1,5 +1,4 @@
-package dev.dimitrov;
-
+package dev.dimitrov.obj;
 
 public class Alumno {
     private String expediente;
