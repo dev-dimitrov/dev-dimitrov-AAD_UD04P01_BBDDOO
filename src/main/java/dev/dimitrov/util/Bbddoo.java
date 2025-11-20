@@ -29,8 +29,15 @@ public class Bbddoo {
     }
 
     public void guardarAlumno(Alumno al) {
-        db.store(al);
-        LOG.info("Guardado el alumno "+al.toString());
+        if(insti != null){
+            ObjectSet<Instituto> instis = db.queryByExample(insti);
+            Instituto instiSeleccionado = instis.get(0);
+            instiSeleccionado.expulsarAlumnos(al);
+        }
+        else{
+            LOG.error("No se ha podido guardar el alumno porque no hay ningun instituto en el que guardarlo");
+        }
+       
     }
 
     public List<Alumno> getTodosAlumnos(String nombreInstituto) {
@@ -40,22 +47,26 @@ public class Bbddoo {
     }
 
     public boolean guardarInstituto(Instituto insti) {
+        boolean status = false;
+        
         // comprobacion de si hay 2 institutos (Solo se puuede guardar uno)
         if (this.insti == null){
             db.store(insti);
             this.insti = insti;
+            status = true;
+            LOG.info("Guardado el instituto");
         }
         else{
             LOG.warn("Ya existe un instituto almacenado");
         }
         
         
-        return true;
+        return status;
     }
 
     public Instituto getInstituto() {
         if(insti == null){
-            LOG.error("No se encontró ningun instituo con esas caracteristicas");
+            LOG.error("No esta guardado aun ningun instituto");
         }
 
         return insti;
@@ -66,5 +77,29 @@ public class Bbddoo {
             db.delete(insti);
         }
         return false;
+    }
+
+    public boolean expulsarATodosAlumnos(){
+        boolean status = false;
+        if(insti != null){
+            ObjectSet<Alumno> todos = db.queryByExample(new Alumno(null, null, null));
+            try{
+                for(Alumno a: todos){
+                    db.delete(a);
+                }
+                db.commit();
+                status = true;
+                LOG.info("Se completó el borrado de todos los alumnos del instituto");
+            }
+            catch(Exception e){
+                db.rollback();
+                LOG.error("Hubo un problema durante el borrado de todos los alumnos, se han revertido todos los cambios");
+            }
+            
+        }
+        else{
+            LOG.warn("No se puede expulsar a ningun alumno porque no hay un instituto guardado");
+        }
+        return status;
     }
 }
